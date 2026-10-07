@@ -55,4 +55,13 @@ touch "$LEARN_MODE_FLAG"
 out=$(printf '%s' "$J" | $SL)
 check "orca 없음: 계속 동작" "ctx 42%" "$out"
 
+# --- 훅 ---
+HOOK="sh hooks/session-start.sh"
+touch "$LEARN_MODE_FLAG"
+out=$($HOOK)
+check "훅: 규칙 주입" "무엇을" "$out"
+case "$out" in *"name: learn-mode"*) echo "FAIL 훅: frontmatter가 섞여 나옴"; FAIL=1 ;; *) echo "ok   훅: frontmatter 제거" ;; esac
+rm -f "$LEARN_MODE_FLAG"
+check_empty "훅: 토글 꺼짐이면 출력 없음" "$($HOOK)"
+
 [ "$FAIL" = 0 ] && echo "ALL PASS" || { echo "SOME FAILED"; exit 1; }

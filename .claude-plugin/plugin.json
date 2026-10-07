@@ -1,0 +1,6 @@
+{
+  "name": "learn-mode",
+  "version": "0.1.0",
+  "description": "학습 모드: 변경사항 3줄 설명 + 컨텍스트·비용 상태줄",
+  "author": { "name": "TrueShine" }
+}
