@@ -31,7 +31,7 @@ pct=$(printf '%s' "$row" | cut -f1)
 cost=$(printf '%s' "$row" | cut -f2)
 tin=$(printf '%s' "$row" | cut -f3)
 tout=$(printf '%s' "$row" | cut -f4)
-cost=$(printf '%.2f' "$cost" 2>/dev/null || echo 0.00)
+cost=$(printf '%.2f' "$cost" 2>/dev/null) || cost=0.00
 
 if [ "$pct" -ge 80 ] 2>/dev/null; then
   printf '📚 \033[31mctx %s%%\033[0m · $%s · %s↑ %s↓\n' "$pct" "$cost" "$tin" "$tout"

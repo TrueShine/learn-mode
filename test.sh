@@ -55,6 +55,25 @@ touch "$LEARN_MODE_FLAG"
 out=$(printf '%s' "$J" | $SL)
 check "orca 없음: 계속 동작" "ctx 42%" "$out"
 
+# --- 추가 테스트: 비용 이중 출력, 80% 경고색, Orca 에러 처리 ---
+export LEARN_MODE_ORCA="$TMP/orca.sh"
+
+out=$(printf '%s' '{"cost":{"total_cost_usd":"x"}}' | $SL)
+check "(a) 비정상 비용: 0.00 출력" "ctx 0% · \$0.00 ·" "$out"
+case "$out" in *"0.000.00"*) echo "FAIL (a) 비용 이중 출력 발생"; FAIL=1 ;; *) echo "ok   (a) 비용 이중 출력 없음" ;; esac
+
+out=$(printf '%s' '{"context_window":{"used_percentage":80}}' | $SL)
+check "(b) 정확히 80%: 경고색 출력" "$(printf '\033[31m')" "$out"
+
+TMP_ORCA_ERR="$TMP/orca_err.sh"
+printf '#!/bin/sh\ncat > "%s/orca_in"\nexit 3\n' "$TMP" > "$TMP_ORCA_ERR"
+chmod +x "$TMP_ORCA_ERR"
+export LEARN_MODE_ORCA="$TMP_ORCA_ERR"
+out=$(printf '%s' '{"context_window":{"used_percentage":42},"cost":{"total_cost_usd":0.5}}' | $SL 2>/dev/null)
+rc=$?
+check "(c) Orca 에러: ctx 여전히 출력" "ctx 42%" "$out"
+if [ $rc -eq 0 ]; then echo "ok   (c) statusline 종료 코드 0"; else echo "FAIL (c) statusline 종료 코드 $rc (기대: 0)"; FAIL=1; fi
+
 # --- 훅 ---
 HOOK="sh hooks/session-start.sh"
 touch "$LEARN_MODE_FLAG"
