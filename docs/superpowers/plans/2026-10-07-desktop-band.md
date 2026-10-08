@@ -335,7 +335,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 플러그인 저장소는 핫 리로드 감시 폴더 밖에 있으므로, 이 세션의 감시 폴더에 심볼릭 링크를 건다.
 
 ```bash
-ln -s /Users/jiukryu/Documents/demo/learn-mode /Users/jiukryu/.claude/dev-mods/a3162dae-9f6d-4df4-a5a0-0d56dac50e97/learn-mode
+ln -s <learn-mode 저장소 경로> ~/.claude/dev-mods/<세션 폴더>/learn-mode
 ```
 Expected: 사용자에게 "Enable hot reloading for this session?" 질문이 뜬다. **사용자가 직접 답해야 한다.** `Enable for this session`을 고르면 턴 종료 시 플러그인이 로드된다.
 

@@ -22,7 +22,7 @@ const world = (on: On, toggle: boolean, usageFn: () => unknown, base = { n: 0 })
 }
 
 const turn = (usage?: object) => ({ answer: '', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer', usage }) as never
-const U = (i: number, o: number) => ({ model: 'm', input_tokens: i, output_tokens: o })
+const U = (i: number, o: number, cr = 0, cc = 0) => ({ model: 'm', input_tokens: i, output_tokens: o, cache_read_input_tokens: cr, cache_creation_input_tokens: cc })
 
 const BAND = { plugin: 'learn-mode', component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 10 } } as const
 
@@ -62,7 +62,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
   test(`밴드: turn.complete 토큰 누적 (${surface})`, async ($, on) => {
     world(on, true, () => usage({}))
-    await $.turn.complete(turn(U(1200, 300)))
+    await $.turn.complete(turn(U(200, 300, 900, 100))) // 입력 = 200+900+100
     await $.turn.complete(turn()) // usage 없으면 그대로
     const ui = await $.ui.mount({ ...BAND, surface })
     expect(await ui.find({ type: 'Text', text: /1\.2k↑ 300↓/ })).toBeDefined()

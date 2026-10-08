@@ -24,8 +24,8 @@ learn-mode/
 ```
 
 ## 동작
-1. `session.start`, `turn.complete`에서 `$.session.usage()`를 호출해 `context.percent`(없을 수 있음)와 `cost.usd`(없을 수 있음)를 상태값(atom)에 저장한다. 타입 정의(`SessionUsage`)로 확인한 이름이다.
-2. `turn.complete`의 usage에서 입력·출력 토큰을 모듈 변수에 누적한다. 플러그인이 다시 로드되면 0부터 다시 센다.
+1. `ui.render` 훅이 렌더마다 `$.session.usage()`(무료 호출)를 호출해 `context.percent`(없을 수 있음)와 `cost.usd`(없을 수 있음)를 읽는다. `session.start` 훅은 없다.
+2. 토큰 합계만 상태값(atom)에 두고 `turn.complete` 훅이 갱신한다. 입력은 `input_tokens + cache_creation_input_tokens + cache_read_input_tokens`(터미널 상태줄의 `total_input_tokens`와 동일), 출력은 `output_tokens`. atom은 핫 리로드를 넘어 유지되므로 리로드로 초기화되지 않고, `/clear`에도 계속 누적된다(비용과 세션 시작은 초기화).
 3. `ui.render`(`component: 'AbovePrompt'`) 훅이 상태값을 읽어 `Box`/`Text`로 한 줄을 그린다. 요소는 `$.ui.resolve(e)`로 받는다.
 4. 토글 파일이 없으면 `next(e)`만 호출해 아무것도 그리지 않는다.
 5. 표시 형식은 터미널 상태줄 래퍼와 같다: 토큰은 1000 이상이면 `15.5k`, 비용은 소수 둘째 자리.

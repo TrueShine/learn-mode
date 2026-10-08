@@ -9,10 +9,15 @@ export function fmtTokens(n: number): string {
 
 export function addUsage(
   t: Totals,
-  u?: { input_tokens: number; output_tokens: number },
+  u?: {
+    input_tokens: number
+    output_tokens: number
+    cache_read_input_tokens?: number
+    cache_creation_input_tokens?: number
+  },
 ): Totals {
   if (!u) return t
-  return { input: t.input + u.input_tokens, output: t.output + u.output_tokens }
+  return { input: t.input + u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0), output: t.output + u.output_tokens }
 }
 
 export const isHot = (percent?: number): boolean => (percent ?? 0) >= 80

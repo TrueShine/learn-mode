@@ -10,6 +10,12 @@ test('fmtTokens: 경계와 소수 첫째 자리 버림', () => {
   expect(fmtTokens(15599)).toBe('15.5k')
 })
 
+test('addUsage: 캐시 토큰도 입력에 합산', () => {
+  const u = { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 900, cache_creation_input_tokens: 50 }
+  expect(addUsage(ZERO, u)).toEqual({ input: 1050, output: 20 })
+  expect(addUsage(ZERO, { input_tokens: 7, output_tokens: 1 })).toEqual({ input: 7, output: 1 })
+})
+
 test('addUsage: 누적, usage 없으면 그대로', () => {
   const a = addUsage(ZERO, { input_tokens: 100, output_tokens: 20 })
   expect(a).toEqual({ input: 100, output: 20 })
