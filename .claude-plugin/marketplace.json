@@ -1,0 +1,5 @@
+{
+  "name": "learn-mode",
+  "owner": { "name": "TrueShine" },
+  "plugins": [{ "name": "learn-mode", "source": "./", "description": "학습 모드: 변경사항 3줄 설명 + 컨텍스트·비용 상태줄·밴드" }]
+}
