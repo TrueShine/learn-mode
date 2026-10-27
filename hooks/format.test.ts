@@ -38,3 +38,15 @@ test('isHot: 80 이상', () => {
   expect(isHot(80)).toBe(true)
   expect(isHot(undefined)).toBe(false)
 })
+
+test('bandText: 모델과 effort는 ctx 앞에 이 순서로', () => {
+  expect(bandText({ model: 'opus', effort: 'high', percent: 42.7, usd: 1.374, totals: ZERO }))
+    .toBe('📚 opus · high · ctx 42% · $1.37 · 0↑ 0↓')
+})
+
+test('bandText: 없거나 빈 값이면 해당 구간만 생략, 숫자 effort는 문자열로', () => {
+  expect(bandText({ model: 'opus', percent: 1, usd: 0, totals: ZERO })).toBe('📚 opus · ctx 1% · $0.00 · 0↑ 0↓')
+  expect(bandText({ effort: 'max', percent: 1, usd: 0, totals: ZERO })).toBe('📚 max · ctx 1% · $0.00 · 0↑ 0↓')
+  expect(bandText({ model: '', effort: '', percent: 1, usd: 0, totals: ZERO })).toBe('📚 ctx 1% · $0.00 · 0↑ 0↓')
+  expect(bandText({ effort: 4096, percent: 1, usd: 0, totals: ZERO })).toBe('📚 4096 · ctx 1% · $0.00 · 0↑ 0↓')
+})

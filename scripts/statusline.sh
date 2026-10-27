@@ -20,7 +20,9 @@ row=$(printf '%s' "$input" | jq -r '
   [ (.context_window.used_percentage // 0 | floor),
     (.cost.total_cost_usd // 0),
     (.context_window.total_input_tokens // 0 | k),
-    (.context_window.total_output_tokens // 0 | k) ] | @tsv' 2>/dev/null)
+    (.context_window.total_output_tokens // 0 | k),
+    (.model.display_name // .model.id // ""),
+    (.effort.level // "") ] | @tsv' 2>/dev/null)
 
 if [ -z "$row" ]; then
   echo "📚 learn-mode"
@@ -31,11 +33,18 @@ pct=$(printf '%s' "$row" | cut -f1)
 cost=$(printf '%s' "$row" | cut -f2)
 tin=$(printf '%s' "$row" | cut -f3)
 tout=$(printf '%s' "$row" | cut -f4)
+model=$(printf '%s' "$row" | cut -f5)
+effort=$(printf '%s' "$row" | cut -f6)
 cost=$(printf '%.2f' "$cost" 2>/dev/null) || cost=0.00
 
+# 모델·effort는 있을 때만 "값 · " 로 앞에 붙인다.
+head=""
+[ -n "$model" ] && head="$model · "
+[ -n "$effort" ] && head="$head$effort · "
+
 if [ "$pct" -ge 80 ] 2>/dev/null; then
-  printf '📚 \033[31mctx %s%%\033[0m · $%s · %s↑ %s↓\n' "$pct" "$cost" "$tin" "$tout"
+  printf '📚 %s\033[31mctx %s%%\033[0m · $%s · %s↑ %s↓\n' "$head" "$pct" "$cost" "$tin" "$tout"
 else
-  printf '📚 ctx %s%% · $%s · %s↑ %s↓\n' "$pct" "$cost" "$tin" "$tout"
+  printf '📚 %sctx %s%% · $%s · %s↑ %s↓\n' "$head" "$pct" "$cost" "$tin" "$tout"
 fi
 exit 0

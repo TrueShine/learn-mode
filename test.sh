@@ -74,6 +74,19 @@ rc=$?
 check "(c) Orca 에러: ctx 여전히 출력" "ctx 42%" "$out"
 if [ $rc -eq 0 ]; then echo "ok   (c) statusline 종료 코드 0"; else echo "FAIL (c) statusline 종료 코드 $rc (기대: 0)"; FAIL=1; fi
 
+# --- 모델/effort 표시 ---
+export LEARN_MODE_ORCA="$TMP/orca.sh"
+BASE='"context_window":{"used_percentage":42.7,"total_input_tokens":15500,"total_output_tokens":1200},"cost":{"total_cost_usd":1.374}'
+OLD=$(printf '{%s}' "$BASE" | $SL)
+check "모델+effort: 순서" "📚 Opus 4 · high · ctx 42% · \$1.37 · 15.5k↑ 1.2k↓" "$(printf '{"model":{"id":"x","display_name":"Opus 4"},"effort":{"level":"high"},%s}' "$BASE" | $SL)"
+check "effort 없음: 모델만" "📚 Opus 4 · ctx 42%" "$(printf '{"model":{"display_name":"Opus 4"},%s}' "$BASE" | $SL)"
+check "모델 없음: effort만" "📚 high · ctx 42%" "$(printf '{"effort":{"level":"high"},%s}' "$BASE" | $SL)"
+check "display_name 없으면 model.id" "📚 claude-x · ctx 42%" "$(printf '{"model":{"id":"claude-x"},%s}' "$BASE" | $SL)"
+check "둘 다 없음: 기존 출력과 동일" "📚 ctx 42% · \$1.37 · 15.5k↑ 1.2k↓" "$OLD"
+[ "$OLD" = "📚 ctx 42% · \$1.37 · 15.5k↑ 1.2k↓" ] && echo "ok   둘 다 없음: 정확히 일치" || { echo "FAIL 둘 다 없음: 정확히 일치 '$OLD'"; FAIL=1; }
+check "80% + 모델/effort: 경고색 유지" "$(printf '\033[31m')" "$(printf '{"model":{"display_name":"Opus 4"},"effort":{"level":"max"},"context_window":{"used_percentage":85}}' | $SL)"
+check "80% + 모델/effort: 모델 표시" "Opus 4 · max · " "$(printf '{"model":{"display_name":"Opus 4"},"effort":{"level":"max"},"context_window":{"used_percentage":85}}' | $SL)"
+
 # --- 훅 ---
 HOOK="sh hooks/session-start.sh"
 touch "$LEARN_MODE_FLAG"

@@ -22,8 +22,9 @@ export function addUsage(
 
 export const isHot = (percent?: number): boolean => (percent ?? 0) >= 80
 
-export function bandText(p: { percent?: number; usd?: number; totals: Totals }): string {
+export function bandText(p: { model?: string; effort?: string | number; percent?: number; usd?: number; totals: Totals }): string {
   const ctx = p.percent === undefined ? '—' : `${Math.floor(p.percent)}%`
   const usd = p.usd === undefined ? '—' : p.usd.toFixed(2)
-  return `📚 ctx ${ctx} · $${usd} · ${fmtTokens(p.totals.input)}↑ ${fmtTokens(p.totals.output)}↓`
+  const head = [p.model, p.effort].map(v => (v === undefined ? '' : String(v))).filter(Boolean).map(v => `${v} · `).join('')
+  return `📚 ${head}ctx ${ctx} · $${usd} · ${fmtTokens(p.totals.input)}↑ ${fmtTokens(p.totals.output)}↓`
 }
