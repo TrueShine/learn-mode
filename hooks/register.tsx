@@ -16,7 +16,10 @@ export const register: Register = on => {
 
   // 메인 모델 요청만 (서브에이전트 step은 agentId가 붙음)
   on('turn.step', async function* ($, e, next) {
-    if (!e.agentId && e.effort !== undefined) await update($, effort, () => e.effort as string | number)
+    if (!e.agentId) {
+      const next_ = e.effort ?? ''
+      if ((await read($, effort)) !== next_) await update($, effort, () => next_)
+    }
     return yield* next(e)
   })
 

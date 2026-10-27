@@ -48,5 +48,6 @@ test('bandText: 없거나 빈 값이면 해당 구간만 생략, 숫자 effort�
   expect(bandText({ model: 'opus', percent: 1, usd: 0, totals: ZERO })).toBe('📚 opus · ctx 1% · $0.00 · 0↑ 0↓')
   expect(bandText({ effort: 'max', percent: 1, usd: 0, totals: ZERO })).toBe('📚 max · ctx 1% · $0.00 · 0↑ 0↓')
   expect(bandText({ model: '', effort: '', percent: 1, usd: 0, totals: ZERO })).toBe('📚 ctx 1% · $0.00 · 0↑ 0↓')
+  expect(bandText({ effort: 0, percent: 1, usd: 0, totals: ZERO })).toBe('📚 0 · ctx 1% · $0.00 · 0↑ 0↓')
   expect(bandText({ effort: 4096, percent: 1, usd: 0, totals: ZERO })).toBe('📚 4096 · ctx 1% · $0.00 · 0↑ 0↓')
 })

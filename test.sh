@@ -87,6 +87,8 @@ check "둘 다 없음: 기존 출력과 동일" "📚 ctx 42% · \$1.37 · 15.5k
 check "80% + 모델/effort: 경고색 유지" "$(printf '\033[31m')" "$(printf '{"model":{"display_name":"Opus 4"},"effort":{"level":"max"},"context_window":{"used_percentage":85}}' | $SL)"
 check "80% + 모델/effort: 모델 표시" "Opus 4 · max · " "$(printf '{"model":{"display_name":"Opus 4"},"effort":{"level":"max"},"context_window":{"used_percentage":85}}' | $SL)"
 
+check "model/effort가 객체가 아니어도 줄 유지" "ctx 42%" "$(printf '{"model":"str","effort":"high",%s}' "$BASE" | $SL)"
+
 # --- 훅 ---
 HOOK="sh hooks/session-start.sh"
 touch "$LEARN_MODE_FLAG"

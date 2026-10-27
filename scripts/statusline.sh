@@ -21,8 +21,8 @@ row=$(printf '%s' "$input" | jq -r '
     (.cost.total_cost_usd // 0),
     (.context_window.total_input_tokens // 0 | k),
     (.context_window.total_output_tokens // 0 | k),
-    (.model.display_name // .model.id // ""),
-    (.effort.level // "") ] | @tsv' 2>/dev/null)
+    (.model.display_name? // .model.id? // ""),
+    (.effort.level? // "") ] | @tsv' 2>/dev/null)
 
 if [ -z "$row" ]; then
   echo "📚 learn-mode"

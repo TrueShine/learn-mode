@@ -149,4 +149,14 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(await ui.find({ type: 'Text', text: /^📚 high · ctx 42%/ })).toBeDefined()
     await ui.unmount()
   })
+
+  test(`밴드: effort 없는 모델로 바꾸면 이전 effort가 사라짐 (${surface})`, async ($, on) => {
+    world(on, true, () => usage({}))
+    await drain($.turn.step(step({ effort: 'high' })))
+    await drain($.turn.step(step({})))
+    const ui = await $.ui.mount({ ...BAND, surface })
+    expect(await ui.find({ type: 'Text', text: /^📚 opus · ctx 42%/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /high/ })).toBeUndefined()
+    await ui.unmount()
+  })
 }
