@@ -25,13 +25,14 @@ learn-mode/
 
 ## 동작
 1. `ui.render` 훅이 렌더마다 `$.session.usage()`(무료 호출)를 호출해 `context.percent`(없을 수 있음)와 `cost.usd`(없을 수 있음)를 읽는다. `session.start` 훅은 없다.
-2. 토큰 합계만 상태값(atom)에 두고 `turn.complete` 훅이 갱신한다. 입력은 `input_tokens + cache_creation_input_tokens + cache_read_input_tokens`(터미널 상태줄의 `total_input_tokens`와 동일), 출력은 `output_tokens`. atom은 핫 리로드를 넘어 유지되므로 리로드로 초기화되지 않고, `/clear`에도 계속 누적된다(비용과 세션 시작은 초기화).
-3. `ui.render`(`component: 'AbovePrompt'`) 훅이 상태값을 읽어 `Box`/`Text`로 한 줄을 그린다. 요소는 `$.ui.resolve(e)`로 받는다.
-4. 토글 파일이 없으면 `next(e)`만 호출해 아무것도 그리지 않는다.
-5. 표시 형식은 터미널 상태줄 래퍼와 같다: 토큰은 1000 이상이면 `15.5k`, 비용은 소수 둘째 자리.
+2. 터미널(`surface === 'terminal'`)에서는 상태줄이 있으므로 밴드를 그리지 않고 `next(e)`만 호출한다. 데스크탑 등은 그린다.
+3. ↑는 같은 `usage()` 읽기의 `context.tokens`(마지막 응답이 처리한 입력 전체, 상태줄의 `total_input_tokens`와 동일)이며 첫 응답 전에는 없으므로 `—`로 표시한다. 누적하지 않는다. ↓는 마지막 메인 모델 응답의 `output_tokens`(`turn.step` 결과의 `usage`)만 atom에 두고 `turn.step` 훅이 덮어쓴다(서브에이전트 step과 usage 없는 응답은 무시, 초기값 0).
+4. `ui.render`(`component: 'AbovePrompt'`) 훅이 상태값을 읽어 `Box`/`Text`로 한 줄을 그린다. 요소는 `$.ui.resolve(e)`로 받는다.
+5. 토글 파일이 없으면 `next(e)`만 호출해 아무것도 그리지 않는다.
+6. 표시 형식은 터미널 상태줄 래퍼와 같다: 토큰은 1000 이상이면 `15.5k`, 비용은 소수 둘째 자리.
 
 ## 오류 처리
-- `usage()`가 예외를 던지거나 필드가 없으면 해당 갱신을 건너뛰고 이전 값을 유지한다. 처음부터 값이 없으면 밴드를 그리지 않는다.
+- `usage()`가 예외를 던지거나 필드가 없으면 해당 갱신을 건너뛰고 이전 값을 유지한다. `usage()` 자체가 실패하면 밴드를 그리지 않고, 토큰만 없으면 `—↑`로 그린다.
 - 훅은 항상 `next(e)`를 호출해 세션 흐름을 막지 않는다.
 
 ## 구현 중 확인할 것
