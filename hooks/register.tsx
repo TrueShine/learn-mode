@@ -1,16 +1,17 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import { ZERO, addUsage, bandText, isHot } from './format'
+import { bandText, isHot } from './format'
 
-const totals = atom({ plugin: 'learn-mode', key: 'totals' } as const, ZERO)
+// 마지막 메인 턴의 출력 토큰 (상태줄의 ↓와 같은 의미)
+const output = atom({ plugin: 'learn-mode', key: 'output' } as const, 0)
 
 // 빈 문자열 = 아직 모르거나 effort 없는 모델 (밴드에서 생략)
 const effort = atom({ plugin: 'learn-mode', key: 'effort' } as const, '' as string | number)
 
 export const register: Register = on => {
   on('turn.complete', async ($, e, next) => {
-    await update($, totals, t => addUsage(t, e.usage))
+    if (!e.agentId && e.usage) await update($, output, () => e.usage!.output_tokens)
     return next(e)
   })
 
@@ -26,13 +27,12 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     try {
       const home = await $.env.get('HOME')
-      if (e.props.hasSurvey || !home || !(await $.fs.exists(`${home}/.claude/.learn-mode`))) return next(e)
+      if (e.surface === 'terminal' || e.props.hasSurvey || !home || !(await $.fs.exists(`${home}/.claude/.learn-mode`))) return next(e)
 
       const u = await $.session.usage()
-      const t = await read($, totals)
       let model: string | undefined
       try { model = await $.session.model() } catch { /* 모델 구간만 생략 */ }
-      const text = bandText({ model, effort: await read($, effort), percent: u.context.percent, usd: u.cost?.usd, totals: t })
+      const text = bandText({ model, effort: await read($, effort), percent: u.context.percent, usd: u.cost?.usd, tokens: u.context.tokens, output: await read($, output) })
       const { Box, Text } = $.ui.resolve(e)
 
       return (

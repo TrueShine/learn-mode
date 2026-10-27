@@ -4,7 +4,7 @@ import type { On } from 'claude-code'
 const usage = (over: object) => ({
   startedAt: 0,
   rateLimits: [],
-  context: { window: 200000, percent: 42.7 },
+  context: { window: 200000, percent: 42.7, tokens: 15500 },
   cost: { usd: 1.374 },
   ...over,
 })
@@ -23,7 +23,7 @@ const world = (on: On, toggle: boolean, usageFn: () => unknown, base = { n: 0 },
   })
 }
 
-const turn = (usage?: object) => ({ answer: '', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer', usage }) as never
+const turn = (usage?: object, agentId?: string) => ({ answer: '', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer', usage, agentId }) as never
 const U = (i: number, o: number, cr = 0, cc = 0) => ({ model: 'm', input_tokens: i, output_tokens: o, cache_read_input_tokens: cr, cache_creation_input_tokens: cc })
 
 const step = (over: object = {}) => ({ turnId: 't', index: 0, model: 'opus', messageCount: 1, ...over }) as never
@@ -31,7 +31,16 @@ const drain = async (s: AsyncGenerator<unknown, unknown>) => { for await (const 
 
 const BAND = { plugin: 'learn-mode', component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 10 } } as const
 
-for (const surface of ['terminal', 'desktop'] as const) {
+test('밴드: 터미널에서는 그리지 않고 next(e)로 넘김', async ($, on) => {
+  const base = { n: 0 }
+  world(on, true, () => usage({}), base)
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /ctx/ })).toBeUndefined()
+  expect(base.n).toBe(1)
+  await ui.unmount()
+})
+
+for (const surface of ['desktop'] as const) {
   test(`밴드: 정상 값 (${surface})`, async ($, on) => {
     world(on, true, () => usage({}))
     const ui = await $.ui.mount({ ...BAND, surface })
@@ -65,12 +74,38 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await ui.unmount()
   })
 
-  test(`밴드: turn.complete 토큰 누적 (${surface})`, async ($, on) => {
+  test(`밴드: ↑는 usage().context.tokens, 누적하지 않음 (${surface})`, async ($, on) => {
     world(on, true, () => usage({}))
-    await $.turn.complete(turn(U(200, 300, 900, 100))) // 입력 = 200+900+100
-    await $.turn.complete(turn()) // usage 없으면 그대로
+    await $.turn.complete(turn(U(200, 300, 900, 100)))
+    await $.turn.complete(turn(U(200, 300, 900, 100)))
     const ui = await $.ui.mount({ ...BAND, surface })
-    expect(await ui.find({ type: 'Text', text: /1\.2k↑ 300↓/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /15\.5k↑ 300↓/ })).toBeDefined()
+    await ui.unmount()
+  })
+
+  test(`밴드: ↓는 마지막 턴의 출력만 (${surface})`, async ($, on) => {
+    world(on, true, () => usage({}))
+    await $.turn.complete(turn(U(1, 300)))
+    await $.turn.complete(turn(U(1, 40)))
+    await $.turn.complete(turn()) // usage 없으면 이전 값 유지
+    const ui = await $.ui.mount({ ...BAND, surface })
+    expect(await ui.find({ type: 'Text', text: /↑ 40↓/ })).toBeDefined()
+    await ui.unmount()
+  })
+
+  test(`밴드: 서브에이전트 turn.complete는 ↓를 바꾸지 않음 (${surface})`, async ($, on) => {
+    world(on, true, () => usage({}))
+    await $.turn.complete(turn(U(1, 40)))
+    await $.turn.complete(turn(U(1, 999), 'a1'))
+    const ui = await $.ui.mount({ ...BAND, surface })
+    expect(await ui.find({ type: 'Text', text: /↑ 40↓/ })).toBeDefined()
+    await ui.unmount()
+  })
+
+  test(`밴드: tokens 없으면 —↑ (${surface})`, async ($, on) => {
+    world(on, true, () => usage({ context: { window: 200000, percent: 42.7 } }))
+    const ui = await $.ui.mount({ ...BAND, surface })
+    expect(await ui.find({ type: 'Text', text: /—↑ 0↓/ })).toBeDefined()
     await ui.unmount()
   })
 
@@ -85,7 +120,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
   })
 
   test(`밴드: 80% 이상은 빨강 (${surface})`, async ($, on) => {
-    world(on, true, () => usage({ context: { window: 200000, percent: 80 } }))
+    world(on, true, () => usage({ context: { window: 200000, percent: 80, tokens: 15500 } }))
     const ui = await $.ui.mount({ ...BAND, surface })
     const t = await ui.find({ type: 'Text', text: /ctx 80%/ })
     expect(t!.props.color).toBe('red')
@@ -93,7 +128,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
   })
 
   test(`밴드: 79%는 dim (${surface})`, async ($, on) => {
-    world(on, true, () => usage({ context: { window: 200000, percent: 79.9 } }))
+    world(on, true, () => usage({ context: { window: 200000, percent: 79.9, tokens: 15500 } }))
     const ui = await $.ui.mount({ ...BAND, surface })
     const t = await ui.find({ type: 'Text', text: /ctx 79%/ })
     expect(t!.props.dimColor).toBe(true)
